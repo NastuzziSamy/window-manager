@@ -3,13 +3,13 @@
     <schema id="org.gnome.shell.extensions.managers.window"
         path="/org/gnome/shell/extensions/managers/window/">
 
-        <!-- <key type="b" name="disable-attention-notification">
-            <default>true</default>
-            <summary>Disable window attention notification</summary>
+        <key type="b" name="hide-top-bar">
+            <default>false</default>
+            <summary>Hide window top bars</summary>
             <description>
-                Default functionnality that notify when a window is ready
+                Remove top bar to make windows more immersive
             </description>
-        </key> -->
+        </key>
 
     </schema>
 </schemalist>

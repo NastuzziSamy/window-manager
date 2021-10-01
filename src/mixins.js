@@ -16,6 +16,26 @@ var SignalMixin = {
         return id;
     },
 
+    disconnectSignal(id) {
+        for (const key in this.signals) {
+            const [element, possibleId] = this.signals[key];
+
+            if (possibleId === id) {
+                try {
+                    element.disconnect(id);
+                } catch (_) {
+                    helper.warn(`Cannot disconnect signal ${id}`);
+                }
+
+                this.signals.splice(key, 1);
+
+                return;
+            }
+        }
+
+        helper.warn(`Cannot find and disconnect signal ${id}`);
+    },
+
     disconnectSignals() {
         for (const key in this.signals) {
             const [element, id] = this.signals[key];

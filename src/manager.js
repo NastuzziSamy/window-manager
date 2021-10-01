@@ -5,7 +5,7 @@ const Main = imports.ui.main;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { SignalMixin, KeybindingMixin } = Me.imports.src.mixins;
-const { EDIT_TITLEBAR_PROPRIETY, FOCUS_SELECTION_WINDOW, SELECTIONS, KEYBINDINGS_SCHEMA_KEY } = Me.imports.src.consts;
+const { EDIT_TITLEBAR_PROPRIETY, FOCUS_SELECTION_WINDOW, SELECTIONS, WINDOW_SCHEMA_KEY, KEYBINDINGS_SCHEMA_KEY } = Me.imports.src.consts;
 const helper = Me.imports.src.helper;
 
 
@@ -16,18 +16,17 @@ var WindowManager = class {
         this.connectSignals();
         this.addKeybindings();
 
-        this.hideWindowsTitleBar();
+        this.trackSettings();
     }
 
     destroy() {
         this.removeKeybindings();
         this.disconnectSignals();
 
-        this.hideWindowsTitleBar(false);
+        this.showWindowsTitleBar();
     }
 
     connectSignals() {
-        this.connectSignal(global.display, 'window-created', (_, window) => this.hideWindowTitleBar(window));
     }
 
     addKeybindings() {
@@ -41,6 +40,29 @@ var WindowManager = class {
                 settings,
                 () => this['focus' + helper.upperWords(selection) + 'Window']()
             );
+        }
+    }
+
+    trackSettings() {
+        let hideTopBarSignalId;
+        this.settings.track(WINDOW_SCHEMA_KEY, 'hide-top-bar',
+            () => {
+                helper.log(this.signals, hideTopBarSignalId);
+                hideTopBarSignalId = this.connectSignal(global.display, 'window-created', (_, window) => this.hideWindowTitleBar(window));
+                helper.log(this.signals, hideTopBarSignalId);
+
+                this.hideWindowsTitleBar();
+            },
+            () => {
+                helper.log(this.signals, hideTopBarSignalId);
+                this.disconnectSignal(hideTopBarSignalId);
+                helper.log(this.signals, hideTopBarSignalId);
+
+                this.showWindowsTitleBar();
+            });
+
+        if (this.settings.get(WINDOW_SCHEMA_KEY, 'hide-top-bar')) {
+            this.hideWindowsTitleBar();
         }
     }
 
@@ -126,6 +148,10 @@ var WindowManager = class {
                 this.hideWindowTitleBar(windows[key], hide);
             }
         }
+    }
+
+    showWindowsTitleBar() {
+        this.hideWindowsTitleBar(false);
     }
 };
 
