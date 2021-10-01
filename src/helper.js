@@ -1,0 +1,210 @@
+const { GLib } = imports.gi;
+
+
+var formatLog = (text) => '[managers.window] ' + text;
+
+var log = (text, ...args) => console.log(formatLog(text), ...args);
+
+var warn = (text, ...args) => console.warn(formatLog(text), ...args);
+
+
+var camel = (text) => {
+    return text.replace(/(?:^\w|[A-Z]|\b\w)/g, function(word, index) {
+        return index === 0 ? word.toLowerCase() : word.toUpperCase();
+    }).replace(/\s+/g, '');
+};
+
+var upperWords = (text) => {
+    const camelText = camel(text);
+
+    return camelText[0].toUpperCase() + camelText.slice(1);
+}
+
+
+var focusWindow = (window) => window.activate(global.get_current_time());
+
+
+var getNextWindow = (next = true) => {
+    const workspace = global.workspace_manager.get_active_workspace();
+    if (!workspace) return;
+
+    const windows = workspace.list_windows();
+    const length = windows.length;
+
+    for (let i = 0; i < lengt&h; i++) {
+        const window = windows[i];
+
+        if (window.appears_focused) {
+            return windows[(next ? i + 1 : i - 1) % length];
+        }
+    }
+};
+
+var getPreviousWindow = () => this.getNextWindow(false);
+
+var getWindowGravities = (window) => {
+    const box = window.get_frame_rect();
+
+    return {
+        x: box.x + (box.width / 2),
+        y: box.y + (box.height / 2),
+    };
+};
+
+
+var getWindowsGravities = () => {
+    const workspace = global.workspace_manager.get_active_workspace();
+    if (!workspace) return;
+
+    const windows = workspace.list_windows();
+    const data = [];
+
+    for (const key in windows) {
+        const window = windows[key];
+
+        data.push({
+            window,
+            time: window.user_time,
+            ...getWindowGravities(window),
+        });
+    }
+
+    return data.sort((a, b) => a.time - b.time);
+};
+
+
+var getDirectPosition = (getBetterPosition, getOppositePosition) => {
+    const windowsGravities = this.getWindowsGravities();
+    if (! windowsGravities) return;
+
+    if (windowsGravities.length < 3)  {
+        if (windowsGravities.length === 2 && ! windowsGravities[1].window.appears_focused) {
+            return windowsGravities[1].window;
+        }
+
+        return windowsGravities[0].window;
+    }
+
+    const focusedWindow = windowsGravities.pop();
+    let candidate;
+
+    for (const key in windowsGravities) {
+        candidate = getBetterPosition(candidate, windowsGravities[key], focusedWindow);
+    }
+
+    if (! candidate) {
+        candidate = focusedWindow;
+
+        for (const key in windowsGravities) {
+            candidate = getOppositePosition(candidate, windowsGravities[key]);
+        }
+    }
+
+    return candidate.window;
+};
+
+var getDirectLeftWindow = () => {
+    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
+        return ((! candidate || possibleCandidate.x > candidate.x) && possibleCandidate.x <= focusedWindow.x) ? possibleCandidate : candidate;
+    }, (candidate, possibleCandidate) => {
+        return possibleCandidate.x > candidate.x ? possibleCandidate : candidate;
+    });
+};
+
+var getDirectRightWindow = () => {
+    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
+        return ((! candidate || possibleCandidate.x < candidate.x) && possibleCandidate.x >= focusedWindow.x) ? possibleCandidate : candidate;
+    }, (candidate, possibleCandidate) => {
+        return possibleCandidate.x < candidate.x ? possibleCandidate : candidate;
+    });
+};
+
+var getDirectTopWindow = () => {
+    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
+        return ((! candidate || possibleCandidate.y > candidate.y) && possibleCandidate.y <= focusedWindow.y) ? possibleCandidate : candidate;
+    }, (candidate, possibleCandidate) => {
+        return possibleCandidate.y > candidate.y ? possibleCandidate : candidate;
+    });
+};
+
+var getDirectBottomWindow = () => {
+    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
+        return ((! candidate || possibleCandidate.y < candidate.y) && possibleCandidate.y >= focusedWindow.y) ? possibleCandidate : candidate;
+    }, (candidate, possibleCandidate) => {
+        return possibleCandidate.y < candidate.y ? possibleCandidate : candidate;
+    });
+};
+
+
+var getWindowId = (window) => {
+    let result = (window.get_description() || '').match(/0x[0-9a-f]+/);
+
+    if (result && result[0]) {
+        return result[0];
+    }
+
+    // use xwininfo, take first child.
+    let act = window.get_compositor_private();
+    let xwindow = act && act['x-window'];
+
+    if (xwindow) {
+        let xwininfo = GLib.spawn_command_line_sync('xwininfo -children -id 0x%x'.format(xwindow));
+
+        if (xwininfo[0]) {
+            let str = ByteArray.toString(xwininfo[1]);
+
+            /**
+             * The X ID of the window is the one preceding the target window's title.
+             * This is to handle cases where the window has no frame and so
+             * act['x-window'] is actually the X ID we want, not the child.
+             */
+            let regexp = new RegExp('(0x[0-9a-f]+) +"%s"'.format(window.title));
+            let m = str.match(regexp);
+
+            if (m && m[1]) {
+                return window._noTitleBarWindowID = m[1];
+            }
+
+            // Otherwise, just grab the child and hope for the best
+            m = str.split(/child(?:ren)?:/)[1].match(/0x[0-9a-f]+/);
+
+            if (m && m[0]) {
+                return window._noTitleBarWindowID = m[0];
+            }
+        }
+    }
+
+    // Try enumerating all available windows and match the title. Note that this
+    // may be necessary if the title contains special characters and `x-window`
+    // is not available.
+    result = GLib.spawn_command_line_sync('xprop -root _NET_CLIENT_LIST');
+
+    if (result[0]) {
+        let str = ByteArray.toString(result[1]);
+        let windowList = str.match(/0x[0-9a-f]+/g);
+        if (! windowList) return null;
+
+        // For each window ID, check if the title matches the desired title.
+        for (var i = 0; i < windowList.length; ++i) {
+            let cmd = 'xprop -id "' + windowList[i] + '" _NET_WM_NAME _NO_TITLE_BAR_ORIGINAL_STATE';
+            result = GLib.spawn_command_line_sync(cmd);
+
+            if (result[0]) {
+                let output = ByteArray.toString(result[1]);
+                let isManaged = output.indexOf("_NO_TITLE_BAR_ORIGINAL_STATE(CARDINAL)") > -1;
+                if (isManaged) {
+                    continue;
+                }
+
+                let title = output.match(/_NET_WM_NAME(\(\w+\))? = "(([^\\"]|\\"|\\\\)*)"/);
+
+                // Is this our guy?
+                if (title && title[2] == window.title) {
+                    return windowList[i];
+                }
+            }
+        }
+    }
+
+    return null;
+};
