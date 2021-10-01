@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions">
+    <schema id="org.gnome.shell.extensions.managers.window.keybindings"
+        path="/org/gnome/shell/extensions/managers/window/keybindings/">
+
+        <key type="as" name="focus-previous-window">
+            <default><![CDATA[[]]]></default>
+            <summary>Focus previous window</summary>
+            <description>
+                Focus the previous window
+            </description>
+        </key>
+
+        <key type="as" name="focus-next-window">
+            <default><![CDATA[[]]]></default>
+            <summary>Focus next window</summary>
+            <description>
+                Focus the next window
+            </description>
+        </key>
+
+        <key type="as" name="focus-right-window">
+            <default><![CDATA[['<Super>Right']]]></default>
+            <summary>Focus nearest right window</summary>
+            <description>
+                Focus the closest one on the right of the current focused window
+            </description>
+        </key>
+
+        <key type="as" name="focus-left-window">
+            <default><![CDATA[['<Super>Left']]]></default>
+            <summary>Focus nearest left window</summary>
+            <description>
+                Focus the closest one on the left of the current focused window
+            </description>
+        </key>
+
+        <key type="as" name="focus-top-window">
+            <default><![CDATA[['<Super>Up']]]></default>
+            <summary>Focus nearest top window</summary>
+            <description>
+                Focus the closest one on the top of the current focused window
+            </description>
+        </key>
+
+        <key type="as" name="focus-bottom-window">
+            <default><![CDATA[['<Super>Down']]]></default>
+            <summary>Focus nearest bottom window</summary>
+            <description>
+                Focus the closest one on the bottom of the current focused window
+            </description>
+        </key>
+
+    </schema>
+</schemalist>
+

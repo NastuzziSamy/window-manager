@@ -1,0 +1,8 @@
+{
+  "name": "Window Manager",
+  "description": "Define window keybindings, window selection...",
+  "uuid": "window-manager@nastuzzisamy.github.com",
+  "shell-version": [
+    "40"
+  ]
+}

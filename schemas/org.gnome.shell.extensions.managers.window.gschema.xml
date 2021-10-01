@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions">
+    <schema id="org.gnome.shell.extensions.managers.window"
+        path="/org/gnome/shell/extensions/managers/window/">
+
+        <!-- <key type="b" name="disable-attention-notification">
+            <default>true</default>
+            <summary>Disable window attention notification</summary>
+            <description>
+                Default functionnality that notify when a window is ready
+            </description>
+        </key> -->
+
+    </schema>
+</schemalist>
