@@ -10,16 +10,14 @@ const { getDirectWindow, focusWindow, getWindowId, debug } = Me.imports.src.help
 
 
 var WindowManager = class {
-    constructor(settings) {
-        this.settings = settings;
-
+    manage() {
         this.connectSignals();
         this.addKeybindings();
 
         this.trackSettings();
     }
 
-    destroy() {
+    unmanage() {
         this.removeKeybindings();
         this.disconnectSignals();
 
@@ -30,7 +28,7 @@ var WindowManager = class {
     }
 
     addKeybindings() {
-        const settings = this.settings.get(KEYBINDINGS_SCHEMA_KEY);
+        const settings = Me.settings.get(KEYBINDINGS_SCHEMA_KEY);
 
         for (const key in SELECTIONS) {
             const selection = SELECTIONS[key];
@@ -46,7 +44,7 @@ var WindowManager = class {
     trackSettings() {
         let hideTopBarSignalId;
 
-        this.settings.follow(WINDOW_SCHEMA_KEY, 'hide-top-bar',
+        Me.settings.follow(WINDOW_SCHEMA_KEY, 'hide-top-bar',
             () => {
                 hideTopBarSignalId = this.connectSignal(global.display, 'window-created', (_, window) => this.hideWindowTitleBar(window));
 
