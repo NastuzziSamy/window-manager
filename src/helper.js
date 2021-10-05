@@ -1,11 +1,34 @@
 const { GLib } = imports.gi;
+const Me = imports.misc.extensionUtils.getCurrentExtension();
+
+const { RIGHT_DIRECTION, LEFT_DIRECTION, TOP_DIRECTION, BOTTOM_DIRECTION, PREVIOUS_SELECTION, NEXT_SELECTION } = Me.imports.src.consts;
 
 
-var formatLog = (text) => '[managers.window] ' + text;
+var settings = {
+    debug: null,
+    'cycle-focus-windows': null,
+};
+
+var setSettings = (key, value) => {
+    if (key === 'debug') {
+        log('DEBUG ' + (value ? 'activated' : 'desactivated'));
+    }
+
+    settings[key] = value;
+};
+
+
+var formatLog = (text) => '[' + Me.metadata.uuid + '] ' + text;
 
 var log = (text, ...args) => console.log(formatLog(text), ...args);
 
 var warn = (text, ...args) => console.warn(formatLog(text), ...args);
+
+var debug = (text, ...args) => {
+    if (settings.debug) {
+        log('DEBUG: ' + text, ...args);
+    }
+}
 
 
 var camel = (text) => {
@@ -42,7 +65,7 @@ var getNextWindow = (next = true) => {
 
 var getPreviousWindow = () => this.getNextWindow(false);
 
-var getWindowGravities = (window) => {
+var getWindowGravity = (window) => {
     const box = window.get_frame_rect();
 
     return {
@@ -65,7 +88,7 @@ var getWindowsGravities = () => {
         data.push({
             window,
             time: window.user_time,
-            ...getWindowGravities(window),
+            ...getWindowGravity(window),
         });
     }
 
@@ -73,9 +96,9 @@ var getWindowsGravities = () => {
 };
 
 
-var getDirectPosition = (getBetterPosition, getOppositePosition) => {
+var getDirectWindow = (selection) => {
     const windowsGravities = this.getWindowsGravities();
-    if (! windowsGravities) return;
+    if (windowsGravities.length === 0) return;
 
     if (windowsGravities.length < 3)  {
         if (windowsGravities.length === 2 && ! windowsGravities[1].window.appears_focused) {
@@ -86,6 +109,8 @@ var getDirectPosition = (getBetterPosition, getOppositePosition) => {
     }
 
     const focusedWindow = windowsGravities.pop();
+    const getBetterPosition = getBetterWindowPosition(selection);
+    const getOppositePosition = getOppositeWindowPosition(selection);
     let candidate;
 
     for (const key in windowsGravities) {
@@ -95,44 +120,76 @@ var getDirectPosition = (getBetterPosition, getOppositePosition) => {
     if (! candidate) {
         candidate = focusedWindow;
 
-        for (const key in windowsGravities) {
-            candidate = getOppositePosition(candidate, windowsGravities[key]);
+        if (settings['cycle-focus-windows']) {
+            for (const key in windowsGravities) {
+                candidate = getOppositePosition(candidate, windowsGravities[key]);
+            }
         }
     }
 
     return candidate.window;
 };
 
-var getDirectLeftWindow = () => {
-    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
-        return ((! candidate || possibleCandidate.x > candidate.x) && possibleCandidate.x <= focusedWindow.x) ? possibleCandidate : candidate;
-    }, (candidate, possibleCandidate) => {
-        return possibleCandidate.x > candidate.x ? possibleCandidate : candidate;
-    });
+var getBetterWindowPosition = (selection) => {
+    switch (selection) {
+        case RIGHT_DIRECTION:
+            return (candidate, possibleCandidate, focusedWindow) => {
+                return ((! candidate || possibleCandidate.x <= candidate.x) && possibleCandidate.x >= focusedWindow.x) ? possibleCandidate : candidate;
+            };
+
+        case LEFT_DIRECTION:
+            return (candidate, possibleCandidate, focusedWindow) => {
+                return ((! candidate || possibleCandidate.x >= candidate.x) && possibleCandidate.x <= focusedWindow.x) ? possibleCandidate : candidate;
+            };
+
+        case TOP_DIRECTION:
+            return (candidate, possibleCandidate, focusedWindow) => {
+                return ((! candidate || possibleCandidate.y >= candidate.y) && possibleCandidate.y <= focusedWindow.y) ? possibleCandidate : candidate;
+            };
+
+        case BOTTOM_DIRECTION:
+            return (candidate, possibleCandidate, focusedWindow) => {
+                return ((! candidate || possibleCandidate.y <= candidate.y) && possibleCandidate.y >= focusedWindow.y) ? possibleCandidate : candidate;
+            };
+
+        case PREVIOUS_SELECTION:
+        case NEXT_SELECTION:
+        default:
+            helper.warn(`Selection not recognized for better window position, got: ${selection}`)
+
+            return (candidate) => candidate;
+    }
 };
 
-var getDirectRightWindow = () => {
-    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
-        return ((! candidate || possibleCandidate.x < candidate.x) && possibleCandidate.x >= focusedWindow.x) ? possibleCandidate : candidate;
-    }, (candidate, possibleCandidate) => {
-        return possibleCandidate.x < candidate.x ? possibleCandidate : candidate;
-    });
-};
+var getOppositeWindowPosition = (selection) => {
+    switch (selection) {
+        case RIGHT_DIRECTION:
+            return (candidate, possibleCandidate) => {
+                return possibleCandidate.x < candidate.x ? possibleCandidate : candidate;
+            };
 
-var getDirectTopWindow = () => {
-    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
-        return ((! candidate || possibleCandidate.y > candidate.y) && possibleCandidate.y <= focusedWindow.y) ? possibleCandidate : candidate;
-    }, (candidate, possibleCandidate) => {
-        return possibleCandidate.y > candidate.y ? possibleCandidate : candidate;
-    });
-};
+        case LEFT_DIRECTION:
+            return (candidate, possibleCandidate) => {
+                return possibleCandidate.x > candidate.x ? possibleCandidate : candidate;
+            };
 
-var getDirectBottomWindow = () => {
-    return this.getDirectPosition((candidate, possibleCandidate, focusedWindow) => {
-        return ((! candidate || possibleCandidate.y < candidate.y) && possibleCandidate.y >= focusedWindow.y) ? possibleCandidate : candidate;
-    }, (candidate, possibleCandidate) => {
-        return possibleCandidate.y < candidate.y ? possibleCandidate : candidate;
-    });
+        case TOP_DIRECTION:
+            return (candidate, possibleCandidate) => {
+                return possibleCandidate.y > candidate.y ? possibleCandidate : candidate;
+            };
+
+        case BOTTOM_DIRECTION:
+            return (candidate, possibleCandidate) => {
+                return possibleCandidate.y < candidate.y ? possibleCandidate : candidate;
+            };
+
+        case PREVIOUS_SELECTION:
+        case NEXT_SELECTION:
+        default:
+            helper.warn(`Selection not recognized for opposite window position, got: ${selection}`)
+
+            return (candidate) => candidate;
+    }
 };
 
 

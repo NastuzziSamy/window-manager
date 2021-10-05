@@ -3,16 +3,25 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { WindowManager } = Me.imports.src.manager;
 const { Settings } = Me.imports.src.settings;
-const { SCHEMAS } = Me.imports.src.consts;
+const { WINDOW_SCHEMA_KEY, SCHEMAS } = Me.imports.src.consts;
+const { settings, setSettings } = Me.imports.src.helper;
 
 
 var Extension = class {
     constructor() {
         this.loadSettings();
+
+        if (settings.debug) {
+            global.managers._window = Me;
+        }
     }
 
     loadSettings() {
         this.settings = new Settings(SCHEMAS);
+
+        for (const key in settings) {
+            this.settings.follow(WINDOW_SCHEMA_KEY, key, (value) => setSettings(key, value));
+        }
     }
 
     enable() {

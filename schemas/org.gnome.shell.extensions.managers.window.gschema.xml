@@ -3,11 +3,27 @@
     <schema id="org.gnome.shell.extensions.managers.window"
         path="/org/gnome/shell/extensions/managers/window/">
 
+        <key type="b" name="debug">
+            <default>false</default>
+            <summary>Debug window manager</summary>
+            <description>
+                Show debug messages
+            </description>
+        </key>
+
         <key type="b" name="hide-top-bar">
             <default>false</default>
             <summary>Hide window top bars</summary>
             <description>
                 Remove top bar to make windows more immersive
+            </description>
+        </key>
+
+        <key type="b" name="cycle-focus-windows">
+            <default>true</default>
+            <summary>Cycle when focusing a new window</summary>
+            <description>
+                Always find a new window to focus in the chosen direction
             </description>
         </key>
 

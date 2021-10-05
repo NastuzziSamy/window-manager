@@ -10,6 +10,15 @@ var SCHEMAS = {
 var EDIT_TITLEBAR_PROPRIETY = '_MOTIF_WM_HINTS';
 
 
+
+var RIGHT_DIRECTION = 'right';
+var LEFT_DIRECTION = 'left';
+var TOP_DIRECTION = 'top';
+var BOTTOM_DIRECTION = 'bottom';
+var DIRECTIONS = [RIGHT_DIRECTION, LEFT_DIRECTION, TOP_DIRECTION, BOTTOM_DIRECTION];
+
+var PREVIOUS_SELECTION = 'previous';
+var NEXT_SELECTION = 'next';
+var SELECTIONS = [PREVIOUS_SELECTION, NEXT_SELECTION, ...DIRECTIONS];
+
 var FOCUS_SELECTION_WINDOW = 'focus-${selection}-window';
-var DIRECTIONS = ['right', 'left', 'top', 'bottom'];
-var SELECTIONS = ['previous', 'next', ...DIRECTIONS];

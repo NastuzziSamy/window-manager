@@ -6,7 +6,7 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 
 const { SignalMixin, KeybindingMixin } = Me.imports.src.mixins;
 const { EDIT_TITLEBAR_PROPRIETY, FOCUS_SELECTION_WINDOW, SELECTIONS, WINDOW_SCHEMA_KEY, KEYBINDINGS_SCHEMA_KEY } = Me.imports.src.consts;
-const helper = Me.imports.src.helper;
+const { getDirectWindow, focusWindow, getWindowId, debug } = Me.imports.src.helper;
 
 
 var WindowManager = class {
@@ -38,86 +38,37 @@ var WindowManager = class {
             this.addKeybinding(
                 FOCUS_SELECTION_WINDOW.replace('${selection}', selection),
                 settings,
-                () => this['focus' + helper.upperWords(selection) + 'Window']()
+                () => this.focusWindowSelection(selection)
             );
         }
     }
 
     trackSettings() {
         let hideTopBarSignalId;
-        this.settings.track(WINDOW_SCHEMA_KEY, 'hide-top-bar',
+
+        this.settings.follow(WINDOW_SCHEMA_KEY, 'hide-top-bar',
             () => {
-                helper.log(this.signals, hideTopBarSignalId);
                 hideTopBarSignalId = this.connectSignal(global.display, 'window-created', (_, window) => this.hideWindowTitleBar(window));
-                helper.log(this.signals, hideTopBarSignalId);
 
                 this.hideWindowsTitleBar();
             },
             () => {
-                helper.log(this.signals, hideTopBarSignalId);
                 this.disconnectSignal(hideTopBarSignalId);
-                helper.log(this.signals, hideTopBarSignalId);
 
                 this.showWindowsTitleBar();
             });
+    }
 
-        if (this.settings.get(WINDOW_SCHEMA_KEY, 'hide-top-bar')) {
-            this.hideWindowsTitleBar();
+    focusWindowSelection(selection) {
+        const window = getDirectWindow(selection);
+        if (!window) {
+            debug(`Not ${selection} window to focus on`);
+
+            return false;
         }
-    }
 
-    focusPreviousWindow() {
-        const window = helper.getPreviousWindow();
-        if (!window) return false;
-
-        helper.focusWindow(window);
-
-        return true;
-    }
-
-    focusNextWindow() {
-        const window = helper.getNextWindow();
-        if (!window) return false;
-
-        helper.focusWindow(window);
-
-        return true;
-    }
-
-    focusLeftWindow() {
-        const window = helper.getDirectLeftWindow();
-        if (!window) return false;
-
-        helper.focusWindow(window);
-
-        return true;
-    }
-
-    focusRightWindow() {
-        const window = helper.getDirectRightWindow();
-        if (!window) return false;
-
-        global.a = window;
-
-        helper.focusWindow(window);
-
-        return true;
-    }
-
-    focusTopWindow() {
-        const window = helper.getDirectTopWindow();
-        if (!window) return false;
-
-        helper.focusWindow(window);
-
-        return true;
-    }
-
-    focusBottomWindow() {
-        const window = helper.getDirectBottomWindow();
-        if (!window) return false;
-
-        helper.focusWindow(window);
+        debug(`Focusing ${selection} window`);
+        focusWindow(window);
 
         return true;
     }
@@ -125,7 +76,7 @@ var WindowManager = class {
     hideWindowTitleBar(window, hide=true) {
         if (!window.decorated) return;
 
-        let id = helper.getWindowId(window);
+        let id = getWindowId(window);
         if (!id) return;
 
         GLib.spawn_command_line_sync(
