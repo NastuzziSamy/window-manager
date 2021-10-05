@@ -5,4 +5,4 @@ GNOME workspace manager
 
 gsettings --schemadir schemas set org.gnome.shell.extensions.managers.window debug true
 
-journalctl -f | grep '\[managers'
+journalctl -f | grep --color=never '\[window-manager'

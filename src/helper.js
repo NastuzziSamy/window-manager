@@ -134,28 +134,54 @@ var getBetterWindowPosition = (selection) => {
     switch (selection) {
         case RIGHT_DIRECTION:
             return (candidate, possibleCandidate, focusedWindow) => {
-                return ((! candidate || possibleCandidate.x <= candidate.x) && possibleCandidate.x >= focusedWindow.x) ? possibleCandidate : candidate;
+                if (possibleCandidate.x < focusedWindow.x) return candidate;
+                if (! candidate) return possibleCandidate;
+                if (possibleCandidate.x >= candidate.x) return candidate;
+
+                return possibleCandidate;
             };
 
         case LEFT_DIRECTION:
             return (candidate, possibleCandidate, focusedWindow) => {
-                return ((! candidate || possibleCandidate.x >= candidate.x) && possibleCandidate.x <= focusedWindow.x) ? possibleCandidate : candidate;
+                if (possibleCandidate.x > focusedWindow.x) return candidate;
+                if (! candidate) return possibleCandidate;
+                if (possibleCandidate.x <= candidate.x) return candidate;
+
+                return possibleCandidate;
             };
 
         case TOP_DIRECTION:
             return (candidate, possibleCandidate, focusedWindow) => {
-                return ((! candidate || possibleCandidate.y >= candidate.y) && possibleCandidate.y <= focusedWindow.y) ? possibleCandidate : candidate;
+                if (possibleCandidate.y > focusedWindow.y) return candidate;
+                if (! candidate) return possibleCandidate;
+                if (possibleCandidate.y <= candidate.y) return candidate;
+
+                return possibleCandidate;
             };
 
         case BOTTOM_DIRECTION:
             return (candidate, possibleCandidate, focusedWindow) => {
-                return ((! candidate || possibleCandidate.y <= candidate.y) && possibleCandidate.y >= focusedWindow.y) ? possibleCandidate : candidate;
+                if (possibleCandidate.y < focusedWindow.y) return candidate;
+                if (! candidate) return possibleCandidate;
+                if (possibleCandidate.y >= candidate.y) return candidate;
+
+                return possibleCandidate;
             };
 
         case PREVIOUS_SELECTION:
+            return (candidate, possibleCandidate) => {
+                if (! candidate) return possibleCandidate;
+
+                return candidate;
+            };
+
         case NEXT_SELECTION:
+            return (candidate, possibleCandidate) => {
+                return possibleCandidate;
+            };
+
         default:
-            helper.warn(`Selection not recognized for better window position, got: ${selection}`)
+            warn(`Selection not recognized for better window position, got: ${selection}`)
 
             return (candidate) => candidate;
     }
@@ -185,8 +211,10 @@ var getOppositeWindowPosition = (selection) => {
 
         case PREVIOUS_SELECTION:
         case NEXT_SELECTION:
+            return (candidate) => candidate;
+
         default:
-            helper.warn(`Selection not recognized for opposite window position, got: ${selection}`)
+            warn(`Selection not recognized for opposite window position, got: ${selection}`)
 
             return (candidate) => candidate;
     }
